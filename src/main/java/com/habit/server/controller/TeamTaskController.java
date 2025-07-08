@@ -64,7 +64,7 @@ public class TeamTaskController {
                                 break;
                         }
                     } catch (Exception e) {
-                        logger.error("パラメータ解析エラー: {}", e.getMessage(), e);
+                        logger.error("Parameter parse error: {}", e.getMessage(), e);
                     }
                 }
             }
@@ -115,7 +115,7 @@ public class TeamTaskController {
                                 break;
                         }
                     } catch (Exception e) {
-                        logger.error("パラメータ解析エラー: {}", e.getMessage(), e);
+              logger.error("Parameter parse error: {}", e.getMessage(), e);
                     }
                 }
             }

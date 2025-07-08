@@ -68,7 +68,7 @@ public class TaskRepository {
       }
       if (hasTask && !hasTaskName) {
         // SQLiteは直接カラム名変更できないため、手動で対応が必要
-        logger.warn("注意: tasksテーブルのカラム 'task' を 'taskName' にリネームしてください。");
+        logger.warn("Please rename the 'task' column to 'taskName' in the tasks table.");
       }
 
       // ユーザーごとのタスク達成状況

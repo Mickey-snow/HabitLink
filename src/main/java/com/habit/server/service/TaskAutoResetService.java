@@ -69,12 +69,12 @@ public class TaskAutoResetService {
                                        .collect(Collectors.toList());
 
         if (!missedDates.isEmpty()) {
-            logger.info("サーバー停止期間中の未処理のタスク更新を開始します: " + missedDates.size() + "日分");
+            logger.info("Starting update of pending tasks during server downtime: " + missedDates.size() + " day(s)");
             for (LocalDate date : missedDates) {
-                logger.info(date + " のタスクを更新します。");
+                logger.info("Updating tasks for " + date + ".");
                 runScheduledCheckForDate(date);
             }
-            logger.info("未処理のタスク更新が完了しました。");
+            logger.info("Finished updating pending tasks.");
         }
     }
     
@@ -96,7 +96,7 @@ public class TaskAutoResetService {
     public void runScheduledCheckForDate(LocalDate date) {
         // 重複実行防止（前回の処理がまだ終わっていない場合はスキップ）
         if (isRunning) {
-            logger.info("自動再設定処理が実行中のため、今回はスキップします");
+            logger.info("Auto reset process already running. Skipping this run.");
             return;
         }
         
@@ -107,7 +107,7 @@ public class TaskAutoResetService {
                 new com.habit.server.repository.TeamRepository();
             List<String> allTeamIds = teamRepository.findAllTeamIds();
             
-            logger.info("自動再設定チェック開始: " + allTeamIds.size() + "チーム対象 at " +
+            logger.info("Auto reset check started: " + allTeamIds.size() + " team(s) at " +
                 java.time.LocalDateTime.now(clock));
             
             int processedTeams = 0;
@@ -120,17 +120,17 @@ public class TaskAutoResetService {
                     totalResets += resets;
                     processedTeams++;
                 } catch (Exception e) {
-                    logger.error("チーム " + teamId + " の自動再設定でエラー: " + e.getMessage());
+                    logger.error("Error during auto reset for team " + teamId + ": " + e.getMessage());
                     e.printStackTrace();
                 }
             }
             
-            logger.info("自動再設定チェック完了: " + processedTeams + "チームで処理, " +
-                totalResets + "タスクを再設定 at " + java.time.LocalDateTime.now(clock));
+            logger.info("Auto reset check complete: processed " + processedTeams + " team(s), reset " +
+                totalResets + " task(s) at " + java.time.LocalDateTime.now(clock));
             
             saveLastExecutionTime(date);
         } catch (Exception e) {
-            logger.error("自動再設定の定期実行でエラー: " + e.getMessage());
+            logger.error("Error during scheduled auto reset: " + e.getMessage());
             e.printStackTrace();
         } finally {
             // 必ず実行フラグをリセット
@@ -153,17 +153,17 @@ public class TaskAutoResetService {
         List<Task> teamTasks = taskRepository.findTeamTasksByTeamID(teamId);
         int resetCount = 0;
         
-        logger.info("[DEBUG] チーム " + teamId + " のタスク数: " + teamTasks.size());
-        logger.info("[DEBUG] 実行日: " + executionDate + ", チェック対象日(前日): " + executionDate.minusDays(1));
+        logger.info("[DEBUG] Team " + teamId + " task count: " + teamTasks.size());
+        logger.info("[DEBUG] Execution date: " + executionDate + ", target (yesterday): " + executionDate.minusDays(1));
 
         for (Task task : teamTasks) {
-            logger.info("[DEBUG] タスク処理開始: " + task.getTaskName() + " (ID: " + task.getTaskId() + ")");
+            logger.info("[DEBUG] Processing task: " + task.getTaskName() + " (ID: " + task.getTaskId() + ")");
             
             String cycleType = task.getCycleType();
             logger.info("[DEBUG] cycleType: " + cycleType);
             
             if (cycleType == null) {
-                logger.info("[DEBUG] cycleTypeがnullのためスキップ: " + task.getTaskName());
+                logger.info("[DEBUG] cycleType is null, skipping: " + task.getTaskName());
                 continue; // 繰り返し設定のないタスクはスキップ
             }
 
@@ -178,11 +178,11 @@ public class TaskAutoResetService {
                     newDueDate = dateToCheck.plusWeeks(1); // 基準日（昨日）から1週間後
                     break;
                 default:
-                    logger.info("[DEBUG] 未対応のcycleTypeのためスキップ: " + cycleType + " (タスク: " + task.getTaskName() + ")");
+                    logger.info("[DEBUG] Unsupported cycleType, skipping: " + cycleType + " (task: " + task.getTaskName() + ")");
                     continue; // 未対応のサイクルタイプはスキップ
             }
 
-            logger.info("[DEBUG] 新しい期限日: " + newDueDate);
+            logger.info("[DEBUG] New due date: " + newDueDate);
 
             // Task自体のdueDateを更新して保存
             task.setDueDate(newDueDate);
@@ -190,13 +190,13 @@ public class TaskAutoResetService {
 
             // 昨日の日付でUserTaskStatusを検索
             List<UserTaskStatus> statusesToCheck = userTaskStatusRepository.findByTaskIdAndDate(task.getTaskId(), dateToCheck);
-            logger.info("[DEBUG] " + dateToCheck + " のUserTaskStatus数: " + statusesToCheck.size());
+            logger.info("[DEBUG] UserTaskStatus count for " + dateToCheck + ": " + statusesToCheck.size());
 
             if (!statusesToCheck.isEmpty()) {
-                logger.info("[INFO] " + dateToCheck + " の未処理UserTaskStatus件数: " + statusesToCheck.size());
+                logger.info("[INFO] Pending UserTaskStatus count for " + dateToCheck + ": " + statusesToCheck.size());
                 
                 for (UserTaskStatus oldStatus : statusesToCheck) {
-                    logger.info("[DEBUG] UserTaskStatus処理開始: userId=" + oldStatus.getUserId() +
+                    logger.info("[DEBUG] Handling UserTaskStatus: userId=" + oldStatus.getUserId() +
                                      ", isDone=" + oldStatus.isDone() + ", teamId=" + oldStatus.getTeamId() +
                                      ", date=" + oldStatus.getDate());
                     
@@ -211,31 +211,31 @@ public class TaskAutoResetService {
                             // 完了していたらポイントを減らす（0未満にはしない）
                             newPoints = Math.max(0, currentPoints - 1);
                             changeAmount = newPoints - currentPoints;
-                            logger.info("[INFO] タスク完了により " + user.getUsername() + " のサボりポイントを減少");
+                            logger.info("[INFO] Task completed, decreasing sabotage points for " + user.getUsername());
                         } else {
                             // 未完了ならポイントを増やす（9を超えない）
                             newPoints = Math.min(9, currentPoints + 1);
                             changeAmount = newPoints - currentPoints;
-                            logger.info("[INFO] タスク未完了により " + user.getUsername() + " のサボりポイントを増加 → サボり報告メッセージを送信");
+                            logger.info("[INFO] Task incomplete, increasing sabotage points for " + user.getUsername() + " and sending report message");
 
                             // サボり報告メッセージを送信
                             try {
                                 String reportMessage = user.getUsername() + "さんが昨日のタスク「" + task.getTaskName() + "」をサボりました。";
                                 Message systemMessage = new Message(SERVER_USER, oldStatus.getTeamId(), reportMessage, LocalDateTime.now(clock));
                                 
-                                logger.info("[DEBUG] メッセージ保存前: " +
+                                logger.info("[DEBUG] Before saving message: " +
                                                   "sender=" + systemMessage.getSender().getUserId() +
                                                   ", teamId=" + oldStatus.getTeamId() +
                                                   ", content=" + systemMessage.getContent());
                                 
                                 messageRepository.save(systemMessage);
                                 
-                                logger.info("[SUCCESS] サボり報告メッセージ送信完了: チーム=" + oldStatus.getTeamId() +
+                                logger.info("[SUCCESS] Sabotage report message sent: team=" + oldStatus.getTeamId() +
                                                   ", ユーザー=" + user.getUsername() +
                                                   ", タスク=" + task.getTaskName() +
                                                   ", 実行時刻=" + LocalDateTime.now(clock));
                             } catch (Exception messageException) {
-                                logger.error("[ERROR] サボり報告メッセージの送信に失敗: チーム=" + oldStatus.getTeamId() +
+                                logger.error("[ERROR] Failed to send sabotage report message: team=" + oldStatus.getTeamId() +
                                                   ", ユーザー=" + user.getUsername() +
                                                   ", タスク=" + task.getTaskName() +
                                                   ", エラー=" + messageException.getMessage());
@@ -246,13 +246,13 @@ public class TaskAutoResetService {
                         try {
                             user.setSabotagePoints(newPoints);
                             userRepository.save(user);
-                            logger.info("[SUCCESS] " + user.getUsername() + " のサボりポイントを " + currentPoints + " Ptから " + newPoints + " Ptに変更 (変動量: " + (changeAmount > 0 ? "+" : "") + changeAmount + ")");
+                            logger.info("[SUCCESS] Updated sabotage points for " + user.getUsername() + ": " + currentPoints + " -> " + newPoints + " (diff: " + (changeAmount > 0 ? "+" : "") + changeAmount + ")");
                         } catch (Exception userSaveException) {
-                            logger.error("[ERROR] ユーザーのサボりポイント保存に失敗: " + user.getUsername() + ", エラー=" + userSaveException.getMessage());
+                            logger.error("[ERROR] Failed to save sabotage points for user " + user.getUsername() + ": " + userSaveException.getMessage());
                             userSaveException.printStackTrace();
                         }
                     } else {
-                        logger.error("[ERROR] ユーザーが見つかりません: userId=" + oldStatus.getUserId());
+                        logger.error("[ERROR] User not found: userId=" + oldStatus.getUserId());
                     }
 
                     // 新しいdueDateでisDoneがfalseのUserTaskStatusを生成
@@ -271,17 +271,17 @@ public class TaskAutoResetService {
                     if (existingStatus.isEmpty()) {
                         userTaskStatusRepository.save(newStatus);
                         resetCount++;
-                        logger.info("新しいUserTaskStatusを生成: userId=" + newStatus.getUserId() +
+                        logger.info("Created new UserTaskStatus: userId=" + newStatus.getUserId() +
                             ", taskId=" + newStatus.getTaskId() +
                             ", date=" + newStatus.getDate());
                     } else {
-                        logger.info("UserTaskStatusは既に存在します。スキップ: userId=" + newStatus.getUserId() +
+                        logger.info("UserTaskStatus already exists, skipping: userId=" + newStatus.getUserId() +
                             ", taskId=" + newStatus.getTaskId() +
                             ", date=" + newStatus.getDate());
                     }
                 }
             } else {
-                logger.info("[DEBUG] " + dateToCheck + " の日付でUserTaskStatusが見つからないため、タスク「" + task.getTaskName() + "」をスキップ");
+                logger.info("[DEBUG] No UserTaskStatus found for " + dateToCheck + ", skipping task \"" + task.getTaskName() + "\"");
             }
         }
         return resetCount;
@@ -299,17 +299,17 @@ public class TaskAutoResetService {
         List<Task> teamTasks = taskRepository.findTeamTasksByTeamID(teamId);
         int processedCount = 0;
         
-        logger.info("[DEBUG] デバッグ用サボり報告チェック開始: チーム " + teamId + " のタスク数: " + teamTasks.size());
-        logger.info("[DEBUG] 実行日: " + executionDate + ", チェック対象日(今日): " + executionDate);
+        logger.info("[DEBUG] Debug sabotage report check start: team " + teamId + " task count: " + teamTasks.size());
+        logger.info("[DEBUG] Execution date: " + executionDate + ", target (today): " + executionDate);
 
         for (Task task : teamTasks) {
-            logger.info("[DEBUG] タスク処理開始: " + task.getTaskName() + " (ID: " + task.getTaskId() + ")");
+            logger.info("[DEBUG] Processing task: " + task.getTaskName() + " (ID: " + task.getTaskId() + ")");
             
             String cycleType = task.getCycleType();
             logger.info("[DEBUG] cycleType: " + cycleType);
             
             if (cycleType == null) {
-                logger.info("[DEBUG] cycleTypeがnullのためスキップ: " + task.getTaskName());
+                logger.info("[DEBUG] cycleType is null, skipping: " + task.getTaskName());
                 continue; // 繰り返し設定のないタスクはスキップ
             }
 
@@ -317,13 +317,13 @@ public class TaskAutoResetService {
 
             // 今日の日付でUserTaskStatusを検索
             List<UserTaskStatus> statusesToCheck = userTaskStatusRepository.findByTaskIdAndDate(task.getTaskId(), dateToCheck);
-            logger.info("[DEBUG] " + dateToCheck + " のUserTaskStatus数: " + statusesToCheck.size());
+            logger.info("[DEBUG] UserTaskStatus count for " + dateToCheck + ": " + statusesToCheck.size());
 
             if (!statusesToCheck.isEmpty()) {
-                logger.info("[INFO] " + dateToCheck + " の未処理UserTaskStatus件数: " + statusesToCheck.size());
+                logger.info("[INFO] Pending UserTaskStatus count for " + dateToCheck + ": " + statusesToCheck.size());
                 
                 for (UserTaskStatus status : statusesToCheck) {
-                    logger.info("[DEBUG] UserTaskStatus処理開始: userId=" + status.getUserId() +
+                    logger.info("[DEBUG] Handling UserTaskStatus: userId=" + status.getUserId() +
                                      ", isDone=" + status.isDone() + ", teamId=" + status.getTeamId() +
                                      ", date=" + status.getDate());
                     
@@ -331,41 +331,41 @@ public class TaskAutoResetService {
                     if (!status.isDone()) {
                         com.habit.domain.User user = userRepository.findById(status.getUserId());
                         if (user != null) {
-                            logger.info("[INFO] デバッグ用サボり報告: " + user.getUsername() + " のタスク「" + task.getTaskName() + "」が未完了");
+                            logger.info("[INFO] Debug sabotage report: " + user.getUsername() + " did not complete task \"" + task.getTaskName() + "\"");
 
                             // サボり報告メッセージを送信
                             try {
                                 String reportMessage = "[デバッグ] " + user.getUsername() + "さんが今日のタスク「" + task.getTaskName() + "」をサボりました。";
                                 Message systemMessage = new Message(SERVER_USER, status.getTeamId(), reportMessage, LocalDateTime.now(clock));
                                 
-                                logger.info("[DEBUG] メッセージ保存前: " +
+                                logger.info("[DEBUG] Before saving message: " +
                                                   "sender=" + systemMessage.getSender().getUserId() +
                                                   ", teamId=" + status.getTeamId() +
                                                   ", content=" + systemMessage.getContent());
                                 
                                 messageRepository.save(systemMessage);
                                 
-                                logger.info("[SUCCESS] デバッグ用サボり報告メッセージ送信完了: チーム=" + status.getTeamId() +
+                                logger.info("[SUCCESS] Debug sabotage report message sent: team=" + status.getTeamId() +
                                                   ", ユーザー=" + user.getUsername() +
                                                   ", タスク=" + task.getTaskName() +
                                                   ", 実行時刻=" + LocalDateTime.now(clock));
                                 processedCount++;
                             } catch (Exception messageException) {
-                                logger.error("[ERROR] デバッグ用サボり報告メッセージの送信に失敗: チーム=" + status.getTeamId() +
+                                logger.error("[ERROR] Failed to send debug sabotage report message: team=" + status.getTeamId() +
                                                   ", ユーザー=" + user.getUsername() +
                                                   ", タスク=" + task.getTaskName() +
                                                   ", エラー=" + messageException.getMessage());
                                 messageException.printStackTrace();
                             }
                         } else {
-                            logger.error("[ERROR] ユーザーが見つかりません: userId=" + status.getUserId());
+                            logger.error("[ERROR] User not found: userId=" + status.getUserId());
                         }
                     } else {
-                        logger.info("[DEBUG] タスク完了済みのためスキップ: userId=" + status.getUserId() + ", taskName=" + task.getTaskName());
+                        logger.info("[DEBUG] Task already completed, skipping: userId=" + status.getUserId() + ", taskName=" + task.getTaskName());
                     }
                 }
             } else {
-                logger.info("[DEBUG] " + dateToCheck + " の日付でUserTaskStatusが見つからないため、タスク「" + task.getTaskName() + "」をスキップ");
+                logger.info("[DEBUG] No UserTaskStatus found for " + dateToCheck + ", skipping task \"" + task.getTaskName() + "\"");
             }
         }
         return processedCount;
@@ -377,7 +377,7 @@ public class TaskAutoResetService {
     public void runDebugSabotageReportForToday() {
         // 重複実行防止（前回の処理がまだ終わっていない場合はスキップ）
         if (isRunning) {
-            logger.info("自動再設定処理が実行中のため、デバッグ処理をスキップします");
+            logger.info("Auto reset process already running, skipping debug processing");
             return;
         }
         
@@ -390,7 +390,7 @@ public class TaskAutoResetService {
                 new com.habit.server.repository.TeamRepository();
             List<String> allTeamIds = teamRepository.findAllTeamIds();
             
-            logger.info("デバッグ用サボり報告チェック開始: " + allTeamIds.size() + "チーム対象 at " +
+            logger.info("Debug sabotage report check start: " + allTeamIds.size() + " team(s) at " +
                 java.time.LocalDateTime.now(clock));
             
             int processedTeams = 0;
@@ -403,16 +403,16 @@ public class TaskAutoResetService {
                     totalReports += reports;
                     processedTeams++;
                 } catch (Exception e) {
-                    logger.error("チーム " + teamId + " のデバッグ用サボり報告でエラー: " + e.getMessage());
+                    logger.error("Error in debug sabotage report for team " + teamId + ": " + e.getMessage());
                     e.printStackTrace();
                 }
             }
             
-            logger.info("デバッグ用サボり報告チェック完了: " + processedTeams + "チームで処理, " +
-                totalReports + "件のサボり報告を送信 at " + java.time.LocalDateTime.now(clock));
+            logger.info("Debug sabotage report check complete: processed " + processedTeams + " team(s), sent " +
+                totalReports + " report(s) at " + java.time.LocalDateTime.now(clock));
             
         } catch (Exception e) {
-            logger.error("デバッグ用サボり報告の実行でエラー: " + e.getMessage());
+            logger.error("Error executing debug sabotage report: " + e.getMessage());
             e.printStackTrace();
         } finally {
             // 必ず実行フラグをリセット
@@ -424,7 +424,7 @@ public class TaskAutoResetService {
         try {
             Files.writeString(LAST_EXECUTION_FILE, date.format(DATE_FORMATTER));
         } catch (IOException e) {
-            logger.error("最終実行日時の保存に失敗しました: " + e.getMessage());
+            logger.error("Failed to save last execution time: " + e.getMessage());
         }
     }
 
@@ -436,8 +436,7 @@ public class TaskAutoResetService {
             String content = Files.readString(LAST_EXECUTION_FILE);
             return LocalDate.parse(content, DATE_FORMATTER);
         } catch (IOException e) {
-            logger.error("最終実行日時の読み込みに失敗しました: " + e.getMessage());
+            logger.error("Failed to load last execution time: " + e.getMessage());
             return null;
         }
-    }
-}
+    }}

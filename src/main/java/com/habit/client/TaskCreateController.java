@@ -118,7 +118,7 @@ public class TaskCreateController {
             return;
         }
         // ログ出力
-        logger.info("タスク作成: " +
+        logger.info("Creating task: " +
             "taskId=" + task.getTaskId() +
             ", name=" + task.getTaskName() +
             ", description=" + task.getDescription() +
@@ -141,7 +141,7 @@ public class TaskCreateController {
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            logger.info("タスク保存APIレスポンス: " + response.body());
+            logger.info("Task save API response: " + response.body());
         } catch (Exception e) {
             showAlert("タスク保存APIエラー: " + e.getMessage());
             return;

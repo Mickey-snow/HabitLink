@@ -180,9 +180,8 @@ public class SearchTeamController {
                 return teamId.trim();
             }
         } catch (Exception ex) {
-            logger.error("チームID取得エラー: {}", ex.getMessage(), ex);
+            logger.error("Failed to get team ID: {}", ex.getMessage(), ex);
         }
         // 取得できない場合はパスコードをフォールバックとして使用
         return passcode;
-    }
-}
+    }}

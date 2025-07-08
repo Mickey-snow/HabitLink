@@ -155,13 +155,13 @@ public class MessageController {
       messageRepository.save(message);
 
       logger.info(
-          "[チャット] teamID={} , senderId={} , username={} , content={}",
+          "[Chat] teamID={} , senderId={} , username={} , content={}",
           teamID,
           senderId,
           sender.getUsername(),
           content);
 
-      respond(exchange, 200, "チャット送信成功");
+      respond(exchange, 200, "Message sent successfully");
     }
   }
 }

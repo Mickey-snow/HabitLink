@@ -35,11 +35,11 @@ public class TaskAutoResetScheduler {
         long initialDelay = now.until(nextRun, ChronoUnit.SECONDS); // 初回実行までの遅延（秒単位）
         long period = TimeUnit.DAYS.toSeconds(1); // 24時間
 
-        logger.info("=== タスク自動再設定スケジューラー初期化 ===");
-        logger.info("現在時刻: " + now);
-        logger.info("次回実行予定: " + nextRun);
-        logger.info("初回実行まで: " + initialDelay + "秒 (" + (initialDelay / 3600) + "時間" + ((initialDelay % 3600) / 60) + "分)");
-        logger.info("実行間隔: 24時間ごと");
+        logger.info("=== Initializing Task Auto Reset Scheduler ===");
+        logger.info("Current time: " + now);
+        logger.info("Next run: " + nextRun);
+        logger.info("Initial delay: " + initialDelay + " seconds (" + (initialDelay / 3600) + "h" + ((initialDelay % 3600) / 60) + "m)");
+        logger.info("Execution interval: every 24 hours");
 
         try {
             scheduler.scheduleAtFixedRate(
@@ -49,15 +49,15 @@ public class TaskAutoResetScheduler {
                 TimeUnit.SECONDS        // 時間単位
             );
             
-            logger.info("[SUCCESS] タスク自動再設定スケジューラーを正常に開始しました。");
+            logger.info("[SUCCESS] Task auto reset scheduler started successfully.");
             
         } catch (Exception e) {
-            logger.error("[ERROR] タスク自動再設定スケジューラーの開始に失敗しました: " + e.getMessage());
+            logger.error("[ERROR] Failed to start task auto reset scheduler: " + e.getMessage());
             e.printStackTrace();
             throw e; // 初期化失敗を上位に伝える
         }
         
-        logger.info("=== スケジューラー初期化完了 ===");
+        logger.info("=== Scheduler initialization complete ===");
     }
     
     /**
@@ -79,7 +79,7 @@ public class TaskAutoResetScheduler {
         } catch (InterruptedException e) {
             scheduler.shutdownNow(); // 割り込み時も強制終了
         }
-        logger.info("タスク自動再設定スケジューラーを停止しました。");
+        logger.info("Task auto reset scheduler stopped.");
     }
     
     /**
@@ -89,31 +89,31 @@ public class TaskAutoResetScheduler {
      */
     private void executeAutoReset() {
         LocalDateTime startTime = LocalDateTime.now();
-        logger.info("=== タスク自動再設定を開始 ===");
-        logger.info("開始時刻: " + startTime);
-        logger.info("スレッド: " + Thread.currentThread().getName());
+        logger.info("=== Starting task auto reset ===");
+        logger.info("Start time: " + startTime);
+        logger.info("Thread: " + Thread.currentThread().getName());
         
         try {
             // メイン処理を実行
             taskAutoResetService.runScheduledCheck();
             
             LocalDateTime endTime = LocalDateTime.now();
-            logger.info("=== タスク自動再設定を正常完了 ===");
-            logger.info("完了時刻: " + endTime);
-            logger.info("処理時間: " + java.time.Duration.between(startTime, endTime).toMillis() + "ms");
+            logger.info("=== Task auto reset completed successfully ===");
+            logger.info("End time: " + endTime);
+            logger.info("Elapsed time: " + java.time.Duration.between(startTime, endTime).toMillis() + "ms");
             
         } catch (Exception e) {
             LocalDateTime errorTime = LocalDateTime.now();
-            logger.error("=== タスク自動再設定でエラーが発生 ===");
-            logger.error("エラー発生時刻: " + errorTime);
-            logger.error("エラー内容: " + e.getMessage());
-            logger.error("スタックトレース:");
+            logger.error("=== Error occurred during task auto reset ===");
+            logger.error("Error time: " + errorTime);
+            logger.error("Error: " + e.getMessage());
+            logger.error("Stack trace:");
             e.printStackTrace();
             
             // エラー後も次回実行を継続するため、ここで例外を再スローしない
         }
         
-        logger.info("=== タスク自動再設定処理終了 ===");
+        logger.info("=== Task auto reset process finished ===");
     }
     
     /**
@@ -137,14 +137,14 @@ public class TaskAutoResetScheduler {
      * @param delaySeconds 実行までの遅延秒数
      */
     public void scheduleTestExecution(int delaySeconds) {
-        logger.info("=== デバッグ用テスト実行をスケジュール ===");
-        logger.info("実行予定: " + delaySeconds + "秒後");
-        logger.info("予定時刻: " + LocalDateTime.now().plusSeconds(delaySeconds));
+        logger.info("=== Scheduling debug test run ===");
+        logger.info("Scheduled to run after " + delaySeconds + " seconds");
+        logger.info("Scheduled time: " + LocalDateTime.now().plusSeconds(delaySeconds));
         
         scheduler.schedule(() -> {
-            logger.info("=== デバッグ用テスト実行開始 ===");
+            logger.info("=== Debug test run started ===");
             executeAutoReset();
-            logger.info("=== デバッグ用テスト実行完了 ===");
+            logger.info("=== Debug test run finished ===");
         }, delaySeconds, TimeUnit.SECONDS);
     }
 }
