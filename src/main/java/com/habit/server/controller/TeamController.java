@@ -233,9 +233,9 @@ public class TeamController {
               // 新メンバーに既存のチーム共通タスクを自動紐づけ
               try {
                 teamTaskService.createUserTaskStatusForNewMember(teamID, memberId);
-                logger.info("新メンバー {} にチーム {} の既存タスクを紐づけました", memberId, teamID);
+                logger.info("Linked existing team tasks to new member {} in team {}", memberId, teamID);
               } catch (Exception e) {
-                logger.error("チーム共通タスクの自動紐づけに失敗: {}", e.getMessage(), e);
+                logger.error("Failed to link common team tasks: {}", e.getMessage(), e);
               }
             }
           }

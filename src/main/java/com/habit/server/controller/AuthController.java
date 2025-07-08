@@ -67,7 +67,7 @@ public class AuthController {
           var user = authService.getUserBySession(sessionId);
           if (user != null) {
             logger.info(
-                "ログインユーザ情報: userId={} , username={} , sabotagePoints={} , joinedTeamIds={}",
+                "Logged in user info: userId={} , username={} , sabotagePoints={} , joinedTeamIds={}",
                 user.getUserId(),
                 user.getUsername(),
                 user.getSabotagePoints(),
@@ -125,7 +125,7 @@ public class AuthController {
           var user = authService.getUserBySession(sessionId);
           if (user != null) {
             logger.info(
-                "新規登録ユーザ情報: userId={} , username={} , sabotagePoints={} , joinedTeamIds={}",
+                "Registered user info: userId={} , username={} , sabotagePoints={} , joinedTeamIds={}",
                 user.getUserId(),
                 user.getUsername(),
                 user.getSabotagePoints(),

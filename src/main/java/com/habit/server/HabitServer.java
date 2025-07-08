@@ -221,32 +221,32 @@ public class HabitServer {
 
     // 自動実行スケジューラーを開始
     try {
-      logger.info("タスク自動再設定スケジューラーを開始します...");
+      logger.info("Starting task auto reset scheduler...");
       taskAutoResetScheduler.start();
-      logger.info("タスク自動再設定スケジューラーが正常に開始されました。");
+      logger.info("Task auto reset scheduler started successfully.");
     } catch (Exception e) {
-      logger.error("タスク自動再設定スケジューラーの開始に失敗しました: {}",
+      logger.error("Failed to start task auto reset scheduler: {}",
                    e.getMessage(), e);
       // スケジューラーが失敗してもサーバー自体は起動を継続
     }
 
     // サーバーシャットダウン時の処理を登録
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      logger.info("サーバをシャットダウンしています...");
+      logger.info("Shutting down server...");
       // スケジューラーを安全に停止
       taskAutoResetScheduler.stop();
       // HTTPサーバーを停止
       server.stop(0);
     }));
 
-    logger.info("サーバが起動しました: {}", Config.getServerUrl());
-    logger.info("タスク自動再設定機能が有効になりました");
+    logger.info("Server started at: {}", Config.getServerUrl());
+    logger.info("Task auto reset enabled");
 
     if (is_debug) {
       logger.info(
-          "手動実行API: /manualTaskReset, /manualTaskResetTeam?teamId=xxx");
+          "Manual run API: /manualTaskReset, /manualTaskResetTeam?teamId=xxx");
       logger.info(
-          "デバッグAPI: /debugScheduledReset?delay=秒数, /debugSabotageReport");
+          "Debug API: /debugScheduledReset?delay=seconds, /debugSabotageReport");
     }
   }
 }

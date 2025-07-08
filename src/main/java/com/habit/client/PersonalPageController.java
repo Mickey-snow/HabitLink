@@ -110,7 +110,7 @@ public class PersonalPageController {
                     // タスク完了処理（API経由）
                     try {
                         if (userId == null || userId.isEmpty()) {
-                            logger.error("エラー: userIdが未設定です。タスク完了処理を中止します。");
+                            logger.error("Error: userId is not set. Aborting task completion.");
                             return;
                         }
                         String taskId = task.getTaskId();
@@ -129,7 +129,7 @@ public class PersonalPageController {
                                 .POST(java.net.http.HttpRequest.BodyPublishers.ofString(params))
                                 .build();
                         java.net.http.HttpResponse<String> response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
-                        logger.info("タスク完了APIレスポンス: {}", response.body());
+                        logger.info("Task completion API response: {}", response.body());
                         
                         // タスク完了成功の場合のみタイル一覧を再読み込み
                         if (response.statusCode() == 200) {
@@ -141,9 +141,9 @@ public class PersonalPageController {
                                         try {
                                             this.tasks = fetchUserTasksForPersonalPage();
                                             updateTaskTiles();
-                                            logger.info("個人ページのタスク一覧を更新しました");
+                                            logger.info("Updated personal page task list");
                                         } catch (Exception ex) {
-                                            logger.error("タスク一覧更新エラー: {}", ex.getMessage(), ex);
+                                            logger.error("Failed to update task list: {}", ex.getMessage(), ex);
                                         }
                                     });
                                 } catch (InterruptedException ie) {
@@ -151,13 +151,13 @@ public class PersonalPageController {
                                 }
                             }).start();
                         } else {
-                            logger.error("タスク完了APIエラー: statusCode={}", response.statusCode());
+                            logger.error("Task completion API error: statusCode={}", response.statusCode());
                         }
                         return;
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    logger.info("タスク選択: {}", name);
+                    logger.info("Task selected: {}", name);
                 }
             });
             taskTilePane.getChildren().add(tileBtn);
@@ -171,7 +171,7 @@ public class PersonalPageController {
         
         // 期限日付が指定されていない場合は今日として扱う
         if (dueDate == null) {
-            logger.info("期限日がnullです。");
+            logger.info("Due date is null.");
             return null;
         }
         

@@ -401,10 +401,10 @@ public class UserTaskStatusController {
                             int newPoints = Math.max(0, currentPoints - 1); // 0未満にはしない
                             user.setSabotagePoints(newPoints);
                             userRepo.save(user);
-                            logger.info("タスク完了によりサボりポイント更新: {} {}pt → {}pt", user.getUsername(), currentPoints, newPoints);
+                        logger.info("Updated sabotage points on task completion: {} {}pt -> {}pt", user.getUsername(), currentPoints, newPoints);
                         }
                     } catch (Exception e) {
-                        logger.error("サボりポイント更新エラー: {}", e.getMessage(), e);
+                    logger.error("Error updating sabotage points: {}", e.getMessage(), e);
                     }
                     
                     response = "タスク完了: userId=" + userId[0] + ", taskId=" + taskId[0] + ", date=" + dateStr;

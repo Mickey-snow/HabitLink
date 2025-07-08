@@ -182,12 +182,12 @@ public class TeamTopController {
           }
 
         } catch (NumberFormatException e) {
-          logger.error("サボりポイントの解析に失敗しました: " + body);
+          logger.error("Failed to parse sabotage points: " + body);
           level = 0; // エラー時は最低レベル
         }
       }
     } catch (Exception ex) {
-      logger.error("サボりポイントの取得に失敗しました: " + ex.getMessage());
+      logger.error("Failed to retrieve sabotage points: " + ex.getMessage());
       level = 0; // エラー時は最低レベル
     }
 
@@ -199,7 +199,7 @@ public class TeamTopController {
             new Image(getClass().getResource(framePath).toExternalForm());
         animationFrames.add(frameImage);
       } catch (Exception e) {
-        logger.error("アニメーションフレームの読み込み失敗: " + framePath);
+        logger.error("Failed to load animation frame: " + framePath);
       }
     }
 
@@ -221,7 +221,7 @@ public class TeamTopController {
             new Image(getClass().getResource(fallbackPath).toExternalForm());
         teamCharView.setImage(fallbackImage);
       } catch (NullPointerException e) {
-        logger.error("フォールバック画像も見つかりません: " + fallbackPath);
+        logger.error("Fallback image not found: " + fallbackPath);
       }
     }
 
